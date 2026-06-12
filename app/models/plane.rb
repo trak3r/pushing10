@@ -4,4 +4,12 @@ class Plane < ApplicationRecord
 
   has_many :passengers, dependent: :nullify
   has_many :flights, dependent: :destroy
+
+  def active_flight
+    flights.in_progress.first
+  end
+
+  def in_flight?
+    active_flight.present?
+  end
 end

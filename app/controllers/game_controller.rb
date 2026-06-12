@@ -3,7 +3,17 @@ class GameController < ApplicationController
 
   def dashboard
     @plane = @player.planes.first
+
+    process_arrivals
+
     @current_airport = @plane.current_airport
+    @active_flight = @plane.active_flight
+
+    if @active_flight
+      @flight_eta = @active_flight.eta
+      @seconds_remaining = @active_flight.seconds_remaining
+    end
+
     @available_passengers = @current_airport.available_passengers
     @boarded_passengers = @plane.passengers.where(delivered: false)
     @destinations = Airport.where.not(id: @current_airport.id).map do |dest|
@@ -18,6 +28,11 @@ class GameController < ApplicationController
   end
 
   def board
+    if @player.planes.first.in_flight?
+      redirect_to root_path, alert: "Can't board while in flight!"
+      return
+    end
+
     passenger = Passenger.find(params[:id])
     plane = @player.planes.first
 
@@ -42,6 +57,11 @@ class GameController < ApplicationController
   end
 
   def unboard
+    if @player.planes.first.in_flight?
+      redirect_to root_path, alert: "Can't unboard while in flight!"
+      return
+    end
+
     passenger = Passenger.find(params[:id])
     plane = @player.planes.first
 
@@ -56,6 +76,12 @@ class GameController < ApplicationController
 
   def do_fly
     plane = @player.planes.first
+
+    if plane.in_flight?
+      redirect_to root_path, alert: "Plane is already in flight!"
+      return
+    end
+
     destination = Airport.find(params[:destination_id])
     distance = plane.current_airport.distance_to(destination)
 
@@ -65,32 +91,50 @@ class GameController < ApplicationController
     end
 
     boarded = plane.passengers.where(delivered: false)
+    if boarded.empty?
+      redirect_to root_path, alert: "No passengers on board! Board some passengers first."
+      return
+    end
+
+    flight = Flight.create!(
+      plane: plane,
+      from_airport: plane.current_airport,
+      to_airport: destination,
+      distance: distance,
+      revenue: 0,
+      departed_at: Time.current
+    )
+
+    duration = flight.duration_seconds
+    redirect_to root_path, notice: "Departed for #{destination.code}! ETA #{duration} seconds."
+  end
+
+  private
+
+  def process_arrivals
+    plane = @player.planes.first
+    flight = plane.active_flight
+    return unless flight
+    return if Time.current < flight.eta
+
+    boarded = plane.passengers.where(delivered: false)
     revenue = 0
 
     boarded.each do |passenger|
-      if passenger.destination_airport == destination
+      if passenger.destination_airport == flight.to_airport
         revenue += passenger.reward
         passenger.update!(delivered: true)
       end
     end
 
-    Flight.create!(
-      plane: plane,
-      from_airport: plane.current_airport,
-      to_airport: destination,
-      distance: distance,
-      revenue: revenue,
-      completed_at: Time.current
-    )
+    flight.update!(revenue: revenue, completed_at: Time.current)
 
-    plane.update!(current_airport: destination)
+    plane.update!(current_airport: flight.to_airport)
     @player.increment!(:coins, revenue)
 
-    passengers_delivered = revenue > 0 ? boarded.select { |p| p.destination_airport == destination }.count : 0
-    redirect_to root_path, notice: "Flew to #{destination.code}! #{passengers_delivered} passengers delivered, earned #{revenue} coins."
+    delivered = boarded.count { |p| p.destination_airport == flight.to_airport }
+    flash.now[:notice] = "Landed at #{flight.to_airport.code}! #{delivered} passengers delivered, earned #{revenue} coins."
   end
-
-  private
 
   def load_player
     @player = Player.first
