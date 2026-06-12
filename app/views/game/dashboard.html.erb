@@ -96,7 +96,7 @@
               <strong><%= pax.name %></strong>
               <span class="text-muted text-sm">&rarr; <%= pax.destination_airport.code %> &middot; <%= pax.reward %> coins &middot; <span class="text-accent">onboard</span></span>
             </div>
-            <%= button_to "Remove", unboard_passenger_path(pax, plane_id: @plane.id), method: :post, class: "btn btn-sm btn-outline" %>
+            <%= button_to "Deplane", unboard_passenger_path(pax, plane_id: @plane.id), method: :post, class: "btn btn-sm btn-outline" %>
           </div>
         <% when :taken %>
           <div class="passenger-item taken">
