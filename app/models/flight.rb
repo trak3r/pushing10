@@ -1,5 +1,5 @@
 class Flight < ApplicationRecord
-  TIME_SCALE = 120
+  TIME_SCALE = ENV.fetch("FLIGHT_TIME_SCALE", 60).to_i
 
   belongs_to :plane
   belongs_to :from_airport, class_name: "Airport"
