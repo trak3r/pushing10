@@ -33,6 +33,11 @@ class Plane < ApplicationRecord
     end
   end
 
+  def fuel_cost(distance)
+    rate = plane_type == "light" ? 0.5 : 0.75
+    (distance * rate).round
+  end
+
   def status_direction
     if in_flight?
       "#{current_airport.code} \u2192 #{active_flight.to_airport.code}"

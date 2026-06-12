@@ -19,11 +19,16 @@ class GameController < ApplicationController
     @plane_full = @plane.capacity > 0 && @boarded_passengers.count >= @plane.capacity
     @destinations = Airport.where.not(id: @current_airport.id).map do |dest|
       dist = @current_airport.distance_to(dest)
+      fuel = @plane.fuel_cost(dist)
+      pax_revenue = @boarded_passengers.select { |p| p.destination_airport_id == dest.id }.sum(&:reward)
       {
         airport: dest,
         distance: dist,
         in_range: dist <= @plane.range,
-        deliverable_passengers: @boarded_passengers.count { |p| p.destination_airport_id == dest.id }
+        fuel_cost: fuel,
+        pax_revenue: pax_revenue,
+        net: pax_revenue - fuel,
+        deliverable_count: @boarded_passengers.count { |p| p.destination_airport_id == dest.id }
       }
     end.sort_by { |d| d[:distance] }
   end
@@ -91,17 +96,21 @@ class GameController < ApplicationController
       return
     end
 
-    boarded = plane.boarded_passengers
-    if boarded.empty?
-      redirect_to root_path(plane_id: plane.id), alert: "No passengers on board! Board some passengers first."
+    fuel_cost = plane.fuel_cost(distance)
+
+    if @player.coins < fuel_cost
+      redirect_to root_path(plane_id: plane.id), alert: "Not enough coins for fuel! Need #{fuel_cost}, have #{@player.coins}."
       return
     end
+
+    @player.decrement!(:coins, fuel_cost)
 
     Flight.create!(
       plane: plane,
       from_airport: plane.current_airport,
       to_airport: destination,
       distance: distance,
+      fuel_cost: fuel_cost,
       revenue: 0,
       departed_at: Time.current
     )
@@ -132,7 +141,8 @@ class GameController < ApplicationController
       @player.increment!(:coins, revenue)
 
       delivered = boarded.count { |p| p.destination_airport == flight.to_airport }
-      flash.now[:notice] = "#{plane.name} landed at #{flight.to_airport.code}! #{delivered} passengers delivered, earned #{revenue} coins."
+      net = revenue - flight.fuel_cost
+      flash.now[:notice] = "#{plane.name} landed at #{flight.to_airport.code}! #{delivered} delivered, pax #{revenue}c, fuel #{flight.fuel_cost}c, net #{net}c."
     end
   end
 

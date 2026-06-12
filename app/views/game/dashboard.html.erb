@@ -132,9 +132,12 @@
         <div class="col">
           <strong><%= d[:airport].code %> &ndash; <%= d[:airport].name %></strong>
           <span class="text-muted text-sm">
-            <%= d[:distance] %>km
-            <% if d[:deliverable_passengers] > 0 %>
-              &middot; <%= d[:deliverable_passengers] %> deliverable
+            <%= d[:distance] %>km &middot; Fuel <%= d[:fuel_cost] %>c
+            <% if d[:deliverable_count] > 0 %>
+              &middot; Pax <%= d[:pax_revenue] %>c
+              <span class="<%= d[:net] >= 0 ? 'text-accent' : 'text-muted' %>"><%= d[:net] >= 0 ? '+' : '' %><%= d[:net] %>c</span>
+            <% else %>
+              &middot; <span class="text-muted">no pax</span>
             <% end %>
             <%= "&middot; OUT OF RANGE".html_safe unless d[:in_range] %>
           </span>
