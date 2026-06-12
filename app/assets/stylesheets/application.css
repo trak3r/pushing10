@@ -26,6 +26,23 @@ h1 { font-size: 1.3rem; font-weight: 700; }
 h2 { font-size: 1.1rem; font-weight: 600; color: var(--accent2); }
 h3 { font-size: 0.95rem; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: 0.05em; }
 
+.header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.title {
+  font-size: 1.4rem;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  color: var(--text);
+  text-transform: uppercase;
+}
+.title-10 {
+  color: var(--accent2);
+}
+
 .card {
   background: var(--surface);
   border: 1px solid var(--border);
