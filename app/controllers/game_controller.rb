@@ -142,7 +142,23 @@ class GameController < ApplicationController
 
       delivered = boarded.count { |p| p.destination_airport == flight.to_airport }
       net = revenue - flight.fuel_cost
+      replenish_passengers(flight.to_airport)
       flash.now[:notice] = "#{plane.name} landed at #{flight.to_airport.code}! #{delivered} delivered, pax #{revenue}c, fuel #{flight.fuel_cost}c, net #{net}c."
+    end
+  end
+
+  def replenish_passengers(airport)
+    names = %w[Alice Bob Charlie Dana Eve Frank Grace Henry Ivy Jack Kate Liam Mia Noah Olivia Paul Quinn Rose Sam Tessa Uma]
+    dests = Airport.where.not(id: airport.id).to_a
+    rand(1..2).times do
+      dest = dests.sample
+      dist = airport.distance_to(dest)
+      Passenger.create!(
+        name: names.sample,
+        origin_airport: airport,
+        destination_airport: dest,
+        reward: (dist * 0.5 + rand(10..30)).to_i
+      )
     end
   end
 
@@ -155,19 +171,19 @@ class GameController < ApplicationController
   end
 
   def build_passenger_list
-    @current_airport.origin_passengers
-      .where(delivered: false)
-      .includes(:destination_airport)
-      .map do |p|
-        status = if p.plane_id == @plane.id
-          :boarded
-        elsif p.plane_id.present?
-          :taken
-        else
-          :available
-        end
-        { passenger: p, status: status }
+    airport_pax = @current_airport.origin_passengers.where(delivered: false)
+    onboard_pax = @plane.boarded_passengers.where.not(origin_airport: @current_airport)
+
+    (airport_pax + onboard_pax).uniq.map do |p|
+      status = if p.plane_id == @plane.id
+        :boarded
+      elsif p.plane_id.present?
+        :taken
+      else
+        :available
       end
+      { passenger: p, status: status }
+    end
   end
 
   def load_player

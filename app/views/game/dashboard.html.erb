@@ -65,7 +65,7 @@
       remaining--;
       if (remaining <= 0) {
         clearInterval(interval);
-        location.href = '?plane_id=' + planeId;
+        window.location.href = '/?plane_id=' + planeId;
       } else {
         countdown.textContent = remaining + 's';
         if (progress) progress.value = total - remaining;
