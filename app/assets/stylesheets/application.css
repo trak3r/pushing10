@@ -106,7 +106,19 @@ h3 { font-size: 0.95rem; font-weight: 600; color: var(--text2); text-transform: 
   padding: 8px 12px;
   border-radius: 8px;
 }
+.passenger-item.boarded {
+  border: 1px solid var(--accent);
+}
+.passenger-item.taken {
+  opacity: 0.5;
+}
 .passenger-info { display: flex; flex-direction: column; gap: 2px; }
+
+.btn.disabled, .btn[disabled] {
+  opacity: 0.4;
+  cursor: default;
+  pointer-events: none;
+}
 
 .dest-grid { display: flex; flex-direction: column; gap: 6px; }
 .dest-item {

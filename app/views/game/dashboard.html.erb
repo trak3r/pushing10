@@ -84,32 +84,41 @@
     <p class="text-muted"><%= @plane.name %> &middot; <%= @plane.range %>km range &middot; <%= @plane.speed %>km/h &middot; <%= @boarded_passengers.count %>/<%= @plane.capacity %> seats</p>
   </div>
 
-  <% if @boarded_passengers.any? %>
-    <h3>Boarded Passengers</h3>
-    <div class="passenger-list mt-sm mb-sm">
-      <% @boarded_passengers.each do |p| %>
-        <div class="passenger-item">
-          <div class="passenger-info">
-            <strong><%= p.name %></strong>
-            <span class="text-muted text-sm"><%= p.origin_airport.code %> &rarr; <%= p.destination_airport.code %> (<%= p.reward %> coins)</span>
-          </div>
-          <%= button_to "Unboard", unboard_passenger_path(p, plane_id: @plane.id), method: :post, class: "btn btn-sm btn-danger" %>
-        </div>
-      <% end %>
-    </div>
-  <% end %>
-
-  <h3>Available Passengers</h3>
+  <h3>Passengers</h3>
   <div class="passenger-list mt-sm mb-sm">
-    <% if @available_passengers.any? %>
-      <% @available_passengers.each do |p| %>
-        <div class="passenger-item">
-          <div class="passenger-info">
-            <strong><%= p.name %></strong>
-            <span class="text-muted text-sm"><%= p.destination_airport.code %> &middot; <%= p.reward %> coins</span>
+    <% if @airport_passengers.any? %>
+      <% @airport_passengers.each do |entry| %>
+        <% pax = entry[:passenger] %>
+        <% case entry[:status] %>
+        <% when :boarded %>
+          <div class="passenger-item boarded">
+            <div class="passenger-info">
+              <strong><%= pax.name %></strong>
+              <span class="text-muted text-sm">&rarr; <%= pax.destination_airport.code %> &middot; <%= pax.reward %> coins &middot; <span class="text-accent">onboard</span></span>
+            </div>
+            <%= button_to "Remove", unboard_passenger_path(pax, plane_id: @plane.id), method: :post, class: "btn btn-sm btn-outline" %>
           </div>
-          <%= button_to "Board", board_passenger_path(p, plane_id: @plane.id), method: :post, class: "btn btn-sm btn-primary" %>
-        </div>
+        <% when :taken %>
+          <div class="passenger-item taken">
+            <div class="passenger-info">
+              <strong><%= pax.name %></strong>
+              <span class="text-muted text-sm">&rarr; <%= pax.destination_airport.code %> &middot; <%= pax.reward %> coins &middot; on another plane</span>
+            </div>
+            <span class="btn btn-sm btn-outline disabled">In use</span>
+          </div>
+        <% else %>
+          <div class="passenger-item">
+            <div class="passenger-info">
+              <strong><%= pax.name %></strong>
+              <span class="text-muted text-sm">&rarr; <%= pax.destination_airport.code %> &middot; <%= pax.reward %> coins</span>
+            </div>
+            <% if @plane_full %>
+              <span class="btn btn-sm btn-outline disabled">Full</span>
+            <% else %>
+              <%= button_to "Board", board_passenger_path(pax, plane_id: @plane.id), method: :post, class: "btn btn-sm btn-primary" %>
+            <% end %>
+          </div>
+        <% end %>
       <% end %>
     <% else %>
       <p class="text-muted">No passengers here right now.</p>

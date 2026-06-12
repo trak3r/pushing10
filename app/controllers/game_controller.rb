@@ -14,8 +14,9 @@ class GameController < ApplicationController
       @seconds_remaining = @active_flight.seconds_remaining
     end
 
-    @available_passengers = @current_airport.available_passengers
+    @airport_passengers = build_passenger_list
     @boarded_passengers = @plane.boarded_passengers
+    @plane_full = @plane.capacity > 0 && @boarded_passengers.count >= @plane.capacity
     @destinations = Airport.where.not(id: @current_airport.id).map do |dest|
       dist = @current_airport.distance_to(dest)
       {
@@ -141,6 +142,22 @@ class GameController < ApplicationController
     else
       @player.planes.first
     end
+  end
+
+  def build_passenger_list
+    @current_airport.origin_passengers
+      .where(delivered: false)
+      .includes(:destination_airport)
+      .map do |p|
+        status = if p.plane_id == @plane.id
+          :boarded
+        elsif p.plane_id.present?
+          :taken
+        else
+          :available
+        end
+        { passenger: p, status: status }
+      end
   end
 
   def load_player
