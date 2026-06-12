@@ -48,28 +48,27 @@
     </p>
     <p class="text-muted mt-sm">
       <%= @active_flight.distance %>km &middot; Arriving in
-      <span id="eta-countdown" data-seconds="<%= @seconds_remaining %>">
-        <%= @seconds_remaining %>s
-      </span>
+      <span id="eta-countdown"><%= @seconds_remaining %>s</span>
     </p>
-    <progress value="<%= @active_flight.duration_seconds - @seconds_remaining %>" max="<%= @active_flight.duration_seconds %>" style="width: 100%; height: 8px; border-radius: 4px; margin-top: 8px;"></progress>
-    <p class="text-muted text-sm mt-sm">Refresh to check arrival status.</p>
+    <progress id="eta-progress" value="<%= @active_flight.duration_seconds - @seconds_remaining %>" max="<%= @active_flight.duration_seconds %>" style="width: 100%; height: 8px; border-radius: 4px; margin-top: 8px;"></progress>
   </div>
 
   <script>
   (function() {
-    var el = document.getElementById('eta-countdown');
-    if (!el) return;
-    var remaining = parseInt(el.dataset.seconds);
+    var remaining = <%= @seconds_remaining %>;
+    var total = <%= @active_flight.duration_seconds %>;
+    var planeId = <%= @plane.id %>;
     if (remaining <= 0) return;
+    var countdown = document.getElementById('eta-countdown');
+    var progress = document.getElementById('eta-progress');
     var interval = setInterval(function() {
       remaining--;
       if (remaining <= 0) {
         clearInterval(interval);
-        el.textContent = '0s';
-        location.reload();
+        location.href = '?plane_id=' + planeId;
       } else {
-        el.textContent = remaining + 's';
+        countdown.textContent = remaining + 's';
+        if (progress) progress.value = total - remaining;
       }
     }, 1000);
   })();
