@@ -7,17 +7,37 @@
     <div class="status-value text-accent"><%= @player.coins %></div>
   </div>
   <div class="status-item">
-    <div class="status-label">Location</div>
-    <div class="status-value"><%= @current_airport.code %></div>
+    <div class="status-label">Planes</div>
+    <div class="status-value"><%= @planes.count %></div>
   </div>
   <div class="status-item">
-    <div class="status-label">Plane</div>
-    <div class="status-value"><%= @plane.name %></div>
+    <div class="status-label">In Air</div>
+    <div class="status-value"><%= @planes.count(&:in_flight?) %></div>
   </div>
   <div class="status-item">
-    <div class="status-label">Capacity</div>
-    <div class="status-value"><%= @boarded_passengers.count %>/<%= @plane.capacity %></div>
+    <div class="status-label">Flights</div>
+    <div class="status-value"><%= Flight.where(plane: @planes).arrived.count %></div>
   </div>
+</div>
+
+<div class="fleet">
+  <% @planes.each do |p| %>
+    <% active = p == @plane %>
+    <a href="?plane_id=<%= p.id %>" class="plane-card<%= ' active' if active %><%= ' in-flight' if p.in_flight? %>">
+      <div class="plane-card-header">
+        <strong><%= p.name %></strong>
+        <span class="status-badge <%= p.in_flight? ? 'flying' : 'landed' %>"><%= p.status_text %></span>
+      </div>
+      <div class="plane-card-body">
+        <span class="text-muted"><%= p.status_direction %></span>
+        <% if p.in_flight? %>
+          <span class="text-sm text-accent"><%= p.active_flight.seconds_remaining %>s</span>
+        <% else %>
+          <span class="text-sm text-muted"><%= p.boarded_passengers.count %>/<%= p.capacity %> seats</span>
+        <% end %>
+      </div>
+    </a>
+  <% end %>
 </div>
 
 <% if @active_flight %>
@@ -61,7 +81,7 @@
       <h2><%= @current_airport.name %></h2>
       <span class="tag"><%= @current_airport.code %></span>
     </div>
-    <p class="text-muted"><%= @plane.name %> &middot; <%= @plane.range %>km range &middot; <%= @plane.speed %>km/h</p>
+    <p class="text-muted"><%= @plane.name %> &middot; <%= @plane.range %>km range &middot; <%= @plane.speed %>km/h &middot; <%= @boarded_passengers.count %>/<%= @plane.capacity %> seats</p>
   </div>
 
   <% if @boarded_passengers.any? %>
@@ -73,7 +93,7 @@
             <strong><%= p.name %></strong>
             <span class="text-muted text-sm"><%= p.origin_airport.code %> &rarr; <%= p.destination_airport.code %> (<%= p.reward %> coins)</span>
           </div>
-          <%= button_to "Unboard", unboard_passenger_path(p), method: :post, class: "btn btn-sm btn-danger" %>
+          <%= button_to "Unboard", unboard_passenger_path(p, plane_id: @plane.id), method: :post, class: "btn btn-sm btn-danger" %>
         </div>
       <% end %>
     </div>
@@ -88,7 +108,7 @@
             <strong><%= p.name %></strong>
             <span class="text-muted text-sm"><%= p.destination_airport.code %> &middot; <%= p.reward %> coins</span>
           </div>
-          <%= button_to "Board", board_passenger_path(p), method: :post, class: "btn btn-sm btn-primary" %>
+          <%= button_to "Board", board_passenger_path(p, plane_id: @plane.id), method: :post, class: "btn btn-sm btn-primary" %>
         </div>
       <% end %>
     <% else %>
@@ -111,7 +131,7 @@
           </span>
         </div>
         <% if d[:in_range] %>
-          <%= button_to "Fly", { action: "do_fly" }, params: { destination_id: d[:airport].id }, method: :post, class: "btn btn-sm btn-primary" %>
+          <%= button_to "Fly", { action: "do_fly" }, params: { destination_id: d[:airport].id, plane_id: @plane.id }, method: :post, class: "btn btn-sm btn-primary" %>
         <% end %>
       </div>
     <% end %>

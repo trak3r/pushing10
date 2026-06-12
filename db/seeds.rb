@@ -24,15 +24,25 @@ airports_data = [
 
 airports = airports_data.map { |a| Airport.create!(a) }
 
-puts "Creating starter plane..."
-plane = Plane.create!(
+puts "Creating starter planes..."
+plane1 = Plane.create!(
   player: player,
   name: "Skyhopper",
-  plane_type: "starter",
+  plane_type: "light",
   speed: 250,
   range: 400,
   capacity: 2,
   current_airport: airports[0]
+)
+
+plane2 = Plane.create!(
+  player: player,
+  name: "Airvan",
+  plane_type: "regional",
+  speed: 300,
+  range: 600,
+  capacity: 4,
+  current_airport: airports[1]
 )
 
 puts "Generating passengers..."
@@ -58,4 +68,5 @@ airports.each do |origin|
 end
 
 puts "Done! Created #{Airport.count} airports, #{Passenger.count} passengers."
-puts "Player #{player.name} has #{player.coins} coins and a #{plane.name} at #{plane.current_airport.code}."
+puts "Player #{player.name} has #{player.coins} coins."
+player.planes.each { |p| puts "  #{p.name} at #{p.current_airport.code}" }

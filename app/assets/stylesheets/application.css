@@ -131,3 +131,63 @@ h3 { font-size: 0.95rem; font-weight: 600; color: var(--text2); text-transform: 
 .status-item { text-align: center; }
 .status-label { font-size: 0.7rem; text-transform: uppercase; color: var(--text2); letter-spacing: 0.05em; }
 .status-value { font-size: 1.1rem; font-weight: 700; }
+
+.fleet {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+  margin-bottom: 12px;
+  scrollbar-width: none;
+}
+.fleet::-webkit-scrollbar { display: none; }
+
+.plane-card {
+  flex: 0 0 auto;
+  min-width: 140px;
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 12px;
+  text-decoration: none;
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: border-color 0.15s;
+}
+.plane-card.active {
+  border-color: var(--accent2);
+}
+.plane-card.in-flight {
+  border-color: var(--accent);
+}
+.plane-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px;
+}
+.plane-card-body {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px;
+}
+
+.status-badge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.status-badge.landed {
+  background: #1a3a2a;
+  color: var(--accent);
+}
+.status-badge.flying {
+  background: #3a2a1a;
+  color: var(--accent2);
+}

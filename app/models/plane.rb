@@ -12,4 +12,32 @@ class Plane < ApplicationRecord
   def in_flight?
     active_flight.present?
   end
+
+  def boarded_passengers
+    passengers.where(delivered: false)
+  end
+
+  def status_text
+    if in_flight?
+      "IN FLIGHT"
+    else
+      "LANDED"
+    end
+  end
+
+  def status_airport_code
+    if in_flight?
+      active_flight.to_airport.code
+    else
+      current_airport.code
+    end
+  end
+
+  def status_direction
+    if in_flight?
+      "#{current_airport.code} \u2192 #{active_flight.to_airport.code}"
+    else
+      current_airport.code
+    end
+  end
 end
