@@ -1,0 +1,83 @@
+# This file is auto-generated from the current state of the database. Instead
+# of editing this file, please use the migrations feature of Active Record to
+# incrementally modify your database, and then regenerate this schema definition.
+#
+# This file is the source Rails uses to define your schema when running `bin/rails
+# db:schema:load`. When creating a new database, `bin/rails db:schema:load` tends to
+# be faster and is potentially less error prone than running all of your
+# migrations from scratch. Old migrations may fail to apply correctly if those
+# migrations use external dependencies or application code.
+#
+# It's strongly recommended that you check this file into your version control system.
+
+ActiveRecord::Schema[8.1].define(version: 2026_06_12_122646) do
+  create_table "airports", force: :cascade do |t|
+    t.string "code"
+    t.datetime "created_at", null: false
+    t.float "latitude"
+    t.float "longitude"
+    t.string "name"
+    t.datetime "updated_at", null: false
+  end
+
+  create_table "flights", force: :cascade do |t|
+    t.datetime "completed_at"
+    t.datetime "created_at", null: false
+    t.integer "distance"
+    t.bigint "from_airport_id", null: false
+    t.bigint "plane_id", null: false
+    t.integer "revenue"
+    t.bigint "to_airport_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["from_airport_id"], name: "index_flights_on_from_airport_id"
+    t.index ["plane_id"], name: "index_flights_on_plane_id"
+    t.index ["to_airport_id"], name: "index_flights_on_to_airport_id"
+  end
+
+  create_table "passengers", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.boolean "delivered", default: false
+    t.bigint "destination_airport_id", null: false
+    t.string "name"
+    t.bigint "origin_airport_id", null: false
+    t.bigint "plane_id"
+    t.bigint "player_id"
+    t.integer "reward"
+    t.datetime "updated_at", null: false
+    t.index ["destination_airport_id"], name: "index_passengers_on_destination_airport_id"
+    t.index ["origin_airport_id"], name: "index_passengers_on_origin_airport_id"
+    t.index ["plane_id"], name: "index_passengers_on_plane_id"
+    t.index ["player_id"], name: "index_passengers_on_player_id"
+  end
+
+  create_table "planes", force: :cascade do |t|
+    t.integer "capacity"
+    t.datetime "created_at", null: false
+    t.bigint "current_airport_id", null: false
+    t.string "name"
+    t.string "plane_type"
+    t.bigint "player_id", null: false
+    t.integer "range"
+    t.integer "speed"
+    t.datetime "updated_at", null: false
+    t.index ["current_airport_id"], name: "index_planes_on_current_airport_id"
+    t.index ["player_id"], name: "index_planes_on_player_id"
+  end
+
+  create_table "players", force: :cascade do |t|
+    t.integer "coins"
+    t.datetime "created_at", null: false
+    t.string "name"
+    t.datetime "updated_at", null: false
+  end
+
+  add_foreign_key "flights", "airports", column: "from_airport_id"
+  add_foreign_key "flights", "airports", column: "to_airport_id"
+  add_foreign_key "flights", "planes"
+  add_foreign_key "passengers", "airports", column: "destination_airport_id"
+  add_foreign_key "passengers", "airports", column: "origin_airport_id"
+  add_foreign_key "passengers", "planes"
+  add_foreign_key "passengers", "players"
+  add_foreign_key "planes", "airports", column: "current_airport_id"
+  add_foreign_key "planes", "players"
+end
