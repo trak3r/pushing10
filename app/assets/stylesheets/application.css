@@ -93,7 +93,23 @@ h3 { font-size: 0.95rem; font-weight: 600; color: var(--text2); text-transform: 
   font-weight: 700;
 }
 
-.flash { padding: 10px 14px; border-radius: 8px; margin-bottom: 12px; font-size: 0.85rem; }
+.flash {
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  position: fixed;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  max-width: 456px;
+  width: calc(100% - 24px);
+  animation: flash-in 0.2s ease-out;
+}
+@keyframes flash-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(-8px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
 .flash-notice { background: #0a3a2a; color: var(--accent); border: 1px solid var(--accent); }
 .flash-alert { background: #3a0a0a; color: var(--danger); border: 1px solid var(--danger); }
 

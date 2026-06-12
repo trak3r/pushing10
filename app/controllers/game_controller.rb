@@ -54,7 +54,7 @@ class GameController < ApplicationController
     end
 
     passenger.update!(player: @player, plane: plane)
-    redirect_to root_path(plane_id: plane.id), notice: "#{passenger.name} boarded!"
+    redirect_to root_path(plane_id: plane.id)
   end
 
   def unboard
@@ -72,7 +72,7 @@ class GameController < ApplicationController
     end
 
     passenger.update!(player: nil, plane: nil)
-    redirect_to root_path(plane_id: plane.id), notice: "#{passenger.name} removed from plane."
+    redirect_to root_path(plane_id: plane.id)
   end
 
   def do_fly
