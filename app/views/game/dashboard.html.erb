@@ -2,18 +2,18 @@
 <% if alert %><div class="flash flash-alert"><%= alert %></div><% end %>
 
 <div class="header">
-  <%= pixel_art :plane, size: 8 %>
+  <%= icon :plane, size: 28 %>
   <span class="title">PUSHING <span class="title-10">10</span></span>
 </div>
 
 <div class="status-bar">
   <div class="status-item">
     <div class="status-label">Coins</div>
-    <div class="status-value text-accent"><%= pixel_art :coin, size: 4 %>&nbsp;<%= @player.coins %></div>
+    <div class="status-value text-accent"><%= icon :coin %>&nbsp;<%= @player.coins %></div>
   </div>
   <div class="status-item">
     <div class="status-label">Planes</div>
-    <div class="status-value"><%= pixel_art :plane, size: 4 %>&nbsp;<%= @planes.count %></div>
+    <div class="status-value"><%= icon :plane, size: 16 %>&nbsp;<%= @planes.count %></div>
   </div>
   <div class="status-item">
     <div class="status-label">In Air</div>
@@ -30,7 +30,7 @@
     <% active = p == @plane %>
     <a href="?plane_id=<%= p.id %>" class="plane-card<%= ' active' if active %><%= ' in-flight' if p.in_flight? %>">
       <div class="plane-card-header">
-        <%= pixel_art :plane, size: 4 %>
+        <%= icon :plane, size: 16 %>
         <strong><%= p.name %></strong>
         <span class="status-badge <%= p.in_flight? ? 'flying' : 'landed' %>"><%= p.status_text %></span>
       </div>
@@ -83,7 +83,7 @@
 <% else %>
   <div class="card">
     <div class="row mb-sm">
-      <h2><%= pixel_art :airport, size: 5 %>&nbsp;<%= @current_airport.name %></h2>
+      <h2><%= icon :airport, size: 20 %>&nbsp;<%= @current_airport.name %></h2>
       <span class="tag"><%= @current_airport.code %></span>
     </div>
     <p class="text-muted"><%= @plane.name %> &middot; <%= @plane.range %>km range &middot; <%= @plane.speed %>km/h &middot; <%= @boarded_passengers.count %>/<%= @plane.capacity %> seats</p>
@@ -98,7 +98,7 @@
         <% when :boarded %>
           <div class="passenger-item boarded">
             <div class="passenger-info">
-              <%= pixel_art :passenger, size: 4 %> <strong><%= pax.name %></strong>
+              <%= icon :passenger, size: 16 %> <strong><%= pax.name %></strong>
               <span class="text-muted text-sm">&rarr; <%= pax.destination_airport.code %> &middot; <%= pax.reward %> coins &middot; <span class="text-accent">onboard</span></span>
             </div>
             <%= button_to "Deplane", unboard_passenger_path(pax, plane_id: @plane.id), method: :post, class: "btn btn-sm btn-outline" %>
@@ -106,7 +106,7 @@
         <% when :taken %>
           <div class="passenger-item taken">
             <div class="passenger-info">
-              <%= pixel_art :passenger, size: 4 %> <strong><%= pax.name %></strong>
+              <%= icon :passenger, size: 16 %> <strong><%= pax.name %></strong>
               <span class="text-muted text-sm">&rarr; <%= pax.destination_airport.code %> &middot; <%= pax.reward %> coins &middot; on another plane</span>
             </div>
             <span class="btn btn-sm btn-outline disabled">In use</span>
@@ -114,7 +114,7 @@
         <% else %>
           <div class="passenger-item">
             <div class="passenger-info">
-              <%= pixel_art :passenger, size: 4 %> <strong><%= pax.name %></strong>
+              <%= icon :passenger, size: 16 %> <strong><%= pax.name %></strong>
               <span class="text-muted text-sm">&rarr; <%= pax.destination_airport.code %> &middot; <%= pax.reward %> coins</span>
             </div>
             <% if @plane_full %>
