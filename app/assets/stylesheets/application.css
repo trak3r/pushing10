@@ -8,8 +8,31 @@
   --accent2: #f5c842;
   --danger: #e85555;
   --text: #e0e8f0;
-  --text2: #8a9bb0;
+  --text2: #a0b4c8;
   --border: #1e4060;
+  --surface-notice: #0a3a2a;
+  --surface-alert: #3a0a0a;
+  --surface-landed: #1a3a2a;
+  --surface-flying: #3a2a1a;
+  --z-dropdown: 100;
+  --z-sticky: 200;
+  --z-backdrop: 300;
+  --z-modal: 400;
+  --z-toast: 500;
+  --z-tooltip: 600;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 body {
@@ -20,6 +43,13 @@ body {
   margin: 0 auto;
   padding: 12px;
   min-height: 100vh;
+}
+
+@media (min-width: 600px) {
+  body {
+    max-width: 600px;
+    padding: 24px;
+  }
 }
 
 h1 { font-size: 1.3rem; font-weight: 700; }
@@ -95,7 +125,7 @@ h3 { font-size: 0.95rem; font-weight: 600; color: var(--text2); text-transform: 
   color: var(--text);
 }
 .btn-full { width: 100%; }
-.btn-sm { padding: 4px 10px; font-size: 0.8rem; }
+.btn-sm { padding: 4px 10px; font-size: 0.8rem; min-height: 44px; }
 
 .badge {
   display: inline-flex;
@@ -127,8 +157,13 @@ h3 { font-size: 0.95rem; font-weight: 600; color: var(--text2); text-transform: 
   from { opacity: 0; transform: translateX(-50%) translateY(-8px); }
   to { opacity: 1; transform: translateX(-50%) translateY(0); }
 }
-.flash-notice { background: #0a3a2a; color: var(--accent); border: 1px solid var(--accent); }
-.flash-alert { background: #3a0a0a; color: var(--danger); border: 1px solid var(--danger); }
+.flash-notice { background: var(--surface-notice); color: var(--accent); border: 1px solid var(--accent); }
+.flash-alert { background: var(--surface-alert); color: var(--danger); border: 1px solid var(--danger); }
+
+.card--enroute { text-align: center; }
+.card--enroute h2 { color: var(--accent); margin-bottom: 8px; }
+
+.progress-bar { width: 100%; height: 8px; border-radius: 4px; margin-top: 8px; }
 
 .passenger-list { display: flex; flex-direction: column; gap: 6px; }
 .passenger-item {
@@ -143,7 +178,7 @@ h3 { font-size: 0.95rem; font-weight: 600; color: var(--text2); text-transform: 
   border: 1px solid var(--accent);
 }
 .passenger-item.taken {
-  opacity: 0.5;
+  border: 1px solid var(--border);
 }
 .passenger-info { display: flex; flex-direction: column; gap: 2px; }
 
@@ -183,9 +218,10 @@ h3 { font-size: 0.95rem; font-weight: 600; color: var(--text2); text-transform: 
   overflow-x: auto;
   padding-bottom: 6px;
   margin-bottom: 12px;
-  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
 }
-.fleet::-webkit-scrollbar { display: none; }
 
 .plane-card {
   flex: 0 0 auto;
@@ -229,10 +265,10 @@ h3 { font-size: 0.95rem; font-weight: 600; color: var(--text2); text-transform: 
   letter-spacing: 0.05em;
 }
 .status-badge.landed {
-  background: #1a3a2a;
+  background: var(--surface-landed);
   color: var(--accent);
 }
 .status-badge.flying {
-  background: #3a2a1a;
+  background: var(--surface-flying);
   color: var(--accent2);
 }

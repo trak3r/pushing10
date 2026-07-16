@@ -1,10 +1,10 @@
-<% if notice %><div class="flash flash-notice"><%= notice %></div><% end %>
-<% if alert %><div class="flash flash-alert"><%= alert %></div><% end %>
+<% if notice %><div class="flash flash-notice" role="alert"><%= notice %></div><% end %>
+<% if alert %><div class="flash flash-alert" role="alert"><%= alert %></div><% end %>
 
-<div class="header">
+<header class="header">
   <%= icon :plane, size: 28 %>
-  <span class="title">PUSHING <span class="title-10">10</span></span>
-</div>
+  <h1 class="title">PUSHING <span class="title-10">10</span></h1>
+</header>
 
 <div class="status-bar">
   <div class="status-item">
@@ -47,8 +47,8 @@
 </div>
 
 <% if @active_flight %>
-  <div class="card" style="border-color: var(--accent); text-align: center;">
-    <h2 style="color: var(--accent); margin-bottom: 8px;">EN ROUTE</h2>
+  <div class="card card--enroute">
+    <h2>EN ROUTE</h2>
     <p class="text-lg">
       <%= @active_flight.from_airport.code %> &rarr; <%= @active_flight.to_airport.code %>
     </p>
@@ -56,7 +56,7 @@
       <%= @active_flight.distance %>km &middot; Arriving in
       <span id="eta-countdown"><%= @seconds_remaining %>s</span>
     </p>
-    <progress id="eta-progress" value="<%= @active_flight.duration_seconds - @seconds_remaining %>" max="<%= @active_flight.duration_seconds %>" style="width: 100%; height: 8px; border-radius: 4px; margin-top: 8px;"></progress>
+    <progress id="eta-progress" value="<%= @active_flight.duration_seconds - @seconds_remaining %>" max="<%= @active_flight.duration_seconds %>" class="progress-bar"></progress>
   </div>
 
   <script>
@@ -71,7 +71,8 @@
       remaining--;
       if (remaining <= 0) {
         clearInterval(interval);
-        window.location.href = '/?plane_id=' + planeId;
+        if (window.Turbo) { Turbo.visit('/?plane_id=' + planeId); }
+        else { window.location.href = '/?plane_id=' + planeId; }
       } else {
         countdown.textContent = remaining + 's';
         if (progress) progress.value = total - remaining;

@@ -2,7 +2,7 @@ module IconHelper
   def icon(name, size: 20)
     data = ICONS[name] or return ""
     paths = data.map { |d| %(<path d="#{d}"/>) }.join
-    %(<svg viewBox="0 0 24 24" width="#{size}" height="#{size}" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0">#{paths}</svg>).html_safe
+    %(<svg viewBox="0 0 24 24" width="#{size}" height="#{size}" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:inline-block;vertical-align:middle;flex-shrink:0">#{paths}</svg>).html_safe
   end
 
   ICONS = {
