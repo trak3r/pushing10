@@ -116,9 +116,11 @@ class GameController < ApplicationController
     end
 
     fuel_cost = plane.fuel_cost(distance)
+    prepaid = plane.boarded_passengers.select { |p| p.destination_airport_id == destination.id }.sum(&:reward)
 
-    if @player.coins < fuel_cost
-      redirect_to plane_path(plane), alert: "Not enough coins for fuel! Need #{fuel_cost}, have #{@player.coins}."
+    if @player.coins + prepaid < fuel_cost
+      needed = fuel_cost - prepaid
+      redirect_to plane_path(plane), alert: "Not enough coins for fuel! Need #{fuel_cost}, have #{@player.coins} (+#{prepaid} prepaid). Need #{needed} more."
       return
     end
 
