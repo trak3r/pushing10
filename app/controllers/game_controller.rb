@@ -76,6 +76,7 @@ class GameController < ApplicationController
     end
 
     passenger.update!(player: @player, plane: plane)
+    Turbo::StreamsChannel.broadcast_refresh_to("game")
     redirect_to plane_path(plane), notice: "#{passenger.name} boarded!"
   end
 
@@ -94,6 +95,7 @@ class GameController < ApplicationController
     end
 
     passenger.update!(player: nil, plane: nil)
+    Turbo::StreamsChannel.broadcast_refresh_to("game")
     redirect_to plane_path(plane), notice: "#{passenger.name} deplaned!"
   end
 
@@ -132,6 +134,7 @@ class GameController < ApplicationController
       departed_at: Time.current
     )
 
+    Turbo::StreamsChannel.broadcast_refresh_to("game")
     redirect_to plane_path(plane), notice: "Departed for #{destination.code}!"
   end
 
@@ -206,10 +209,13 @@ class GameController < ApplicationController
   private
 
   def process_arrivals
+    arrived = false
     @player.planes.each do |plane|
       flight = plane.active_flight
       next unless flight
       next if Time.current < flight.eta
+
+      arrived = true
 
       boarded = plane.boarded_passengers
       revenue = 0
@@ -227,6 +233,8 @@ class GameController < ApplicationController
 
       replenish_passengers(flight.to_airport)
     end
+
+    Turbo::StreamsChannel.broadcast_refresh_to("game") if arrived
   end
 
   def replenish_passengers(airport)

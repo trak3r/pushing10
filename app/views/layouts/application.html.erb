@@ -7,8 +7,11 @@
     <meta name="application-name" content="Pushing10">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#0b1a2e">
+    <meta name="turbo-refresh-method" content="morph">
+    <meta name="turbo-refresh-scroll" content="preserve">
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
+    <%= turbo_stream_from "game" %>
 
     <%= yield :head %>
 
