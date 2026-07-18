@@ -1,32 +1,37 @@
 <% if notice %><div class="flash flash-notice"><%= notice %></div><% end %>
 <% if alert %><div class="flash flash-alert"><%= alert %></div><% end %>
 
+<% now = Time.current %>
 <% flights_json = @active_flights.map { |f|
   from = f.from_airport
   to = f.to_airport
   progress = flight_progress(f)
+  elapsed = f.departed_at ? (now - f.departed_at).to_f : 0.0
+  fx = map_x(from.longitude); fy = map_y(from.latitude)
+  tx = map_x(to.longitude); ty = map_y(to.latitude)
+  dx = tx - fx; dy = ty - fy
+  dist = Math.sqrt(dx * dx + dy * dy)
+  nx = -dy / dist; ny = dx / dist
+  arc = dist * 0.4
+  cx = (fx + tx) / 2 + nx * arc; cy = (fy + ty) / 2 + ny * arc
   pos = arc_point(from.latitude, from.longitude, to.latitude, to.longitude, progress)
   {
     id: f.id,
     plane: f.plane.name,
     from_code: from.code,
     to_code: to.code,
-    from_lat: from.latitude,
-    from_lng: from.longitude,
-    to_lat: to.latitude,
-    to_lng: to.longitude,
-    progress: progress,
-    x: pos[:x],
-    y: pos[:y],
-    angle: pos[:angle],
+    fx: fx.round(1), fy: fy.round(1),
+    tx: tx.round(1), ty: ty.round(1),
+    cx: cx.round(1), cy: cy.round(1),
+    elapsed: elapsed.round(1),
+    duration: f.duration_seconds,
+    x: pos[:x], y: pos[:y], angle: pos[:angle],
   }
 } %>
 
 <div class="map-container"
      data-controller="map"
-     data-map-flights="<%= flights_json.to_json %>"
-     data-map-width="<%= @map_w + 40 %>"
-     data-map-height="<%= @map_h + 40 %>">
+     data-map-flights-value="<%= flights_json.to_json %>">
   <svg viewBox="0 0 <%= @map_w + 40 %> <%= @map_h + 40 %>" class="map-svg">
     <rect x="0" y="0" width="<%= @map_w + 40 %>" height="<%= @map_h + 40 %>" fill="var(--bg)" rx="12"/>
 
@@ -62,7 +67,8 @@
   <% if @active_flights.any? %>
     <div class="map-legend">
       <% @active_flights.each do |f| %>
-        <div class="map-legend-item">
+        <% fj = flights_json.find { |j| j[:id] == f.id } %>
+        <div class="map-legend-item" data-flight-id="<%= f.id %>">
           <span class="legend-route text-sm"><%= f.from_airport.code %> &rarr; <%= f.to_airport.code %></span>
           <span class="legend-plane text-sm text-muted"><%= f.plane.name %></span>
           <span class="legend-eta text-sm text-accent"><%= f.seconds_remaining %>s</span>

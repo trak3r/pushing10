@@ -1,22 +1,26 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
+  static values = { flights: String }
+
   connect() {
-    const raw = this.element.dataset.mapFlights
+    this.init()
+  }
+
+  flightsValueChanged() {
+    this.init()
+  }
+
+  init() {
+    if (this.timer) clearInterval(this.timer)
+
+    const raw = this.flightsValue
     if (!raw) return
 
-    this.flights = JSON.parse(raw)
-    this.width = parseFloat(this.element.dataset.mapWidth)
-    this.height = parseFloat(this.element.dataset.mapHeight)
-    this.pad = 20
+    const parsed = JSON.parse(raw)
+    if (!parsed.length) return
 
-    this.minLng = Math.min(...this.flights.map(f => Math.min(f.from_lng, f.to_lng))) - 0.5
-    this.maxLng = Math.max(...this.flights.map(f => Math.max(f.from_lng, f.to_lng))) + 0.5
-    this.minLat = Math.min(...this.flights.map(f => Math.min(f.from_lat, f.to_lat))) - 0.5
-    this.maxLat = Math.max(...this.flights.map(f => Math.max(f.from_lat, f.to_lat))) + 0.5
-
-    this.svg = this.element.querySelector(".map-svg")
-    if (!this.svg) return
+    this.flights = parsed
 
     this.markers = {}
     this.element.querySelectorAll(".plane-marker").forEach(el => {
@@ -24,72 +28,56 @@ export default class extends Controller {
       if (id) this.markers[id] = el
     })
 
-    this.startTime = Date.now()
+    this.legendEtas = {}
+    this.element.querySelectorAll(".map-legend-item").forEach(el => {
+      const id = el.dataset.flightId
+      if (id) this.legendEtas[id] = el.querySelector(".legend-eta")
+    })
 
+    this.t0 = Date.now()
     this.tick()
-    this.interval = setInterval(() => this.tick(), 1000)
+    this.timer = setInterval(() => this.tick(), 50)
   }
 
   disconnect() {
-    if (this.interval) clearInterval(this.interval)
-  }
-
-  projX(lng) {
-    return (lng - this.minLng) / (this.maxLng - this.minLng) * this.width + this.pad
-  }
-
-  projY(lat) {
-    return (this.maxLat - lat) / (this.maxLat - this.minLat) * this.height + this.pad
-  }
-
-  arcPos(fromLat, fromLng, toLat, toLng, t) {
-    const x1 = this.projX(fromLng)
-    const y1 = this.projY(fromLat)
-    const x2 = this.projX(toLng)
-    const y2 = this.projY(toLat)
-
-    const mx = (x1 + x2) / 2
-    const my = (y1 + y2) / 2
-    const dx = x2 - x1
-    const dy = y2 - y1
-    const dist = Math.sqrt(dx * dx + dy * dy)
-    const nx = -dy / dist
-    const ny = dx / dist
-    const arcHeight = dist * 0.4
-
-    const cx = mx + nx * arcHeight
-    const cy = my + ny * arcHeight
-
-    const u = 1 - t
-    const x = u * u * x1 + 2 * u * t * cx + t * t * x2
-    const y = u * u * y1 + 2 * u * t * cy + t * t * y2
-
-    const tx = 2 * u * (cx - x1) + 2 * t * (x2 - cx)
-    const ty = 2 * u * (cy - y1) + 2 * t * (y2 - cy)
-    const angle = Math.atan2(ty, tx) * 180 / Math.PI
-
-    return { x: x.toFixed(1), y: y.toFixed(1), angle: angle.toFixed(1) }
+    if (this.timer) clearInterval(this.timer)
   }
 
   tick() {
-    const elapsed = (Date.now() - this.startTime) / 1000
+    const secs = (Date.now() - this.t0) / 1000
 
-    this.flights.forEach(f => {
-      const elapsedSinceDeparture = elapsed + f.progress * 10
-      let t = elapsedSinceDeparture / 10
+    for (const f of this.flights) {
+      const t = Math.min(Math.max((f.elapsed + secs) / f.duration, 0), 1)
+      const arrived = t >= 1
 
-      if (t > 1) {
-        t = 1
-        const marker = this.markers[f.id]
-        if (marker) marker.style.display = "none"
-        return
-      }
-
-      const pos = this.arcPos(f.from_lat, f.from_lng, f.to_lat, f.to_lng, t)
       const marker = this.markers[f.id]
       if (marker) {
-        marker.setAttribute("transform", `translate(${pos.x}, ${pos.y}) rotate(${pos.angle})`)
+        if (arrived) {
+          marker.style.display = "none"
+        } else {
+          marker.style.display = ""
+          const u = 1 - t
+          const x = u * u * f.fx + 2 * u * t * f.cx + t * t * f.tx
+          const y = u * u * f.fy + 2 * u * t * f.cy + t * t * f.ty
+          const tx = 2 * u * (f.cx - f.fx) + 2 * t * (f.tx - f.cx)
+          const ty = 2 * u * (f.cy - f.fy) + 2 * t * (f.ty - f.cy)
+          const angle = Math.round(Math.atan2(ty, tx) * 180 / Math.PI + 90)
+          marker.setAttribute("transform",
+            `translate(${x.toFixed(1)},${y.toFixed(1)}) rotate(${angle})`)
+        }
       }
-    })
+
+      const etaEl = this.legendEtas[f.id]
+      if (etaEl) {
+        const left = f.duration - (f.elapsed + secs)
+        if (arrived) {
+          etaEl.textContent = "Arrived"
+          etaEl.style.color = "#f5c842"
+        } else {
+          etaEl.textContent = Math.ceil(Math.max(left, 0)) + "s"
+          etaEl.style.color = ""
+        }
+      }
+    }
   }
 }
