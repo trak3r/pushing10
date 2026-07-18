@@ -23,6 +23,22 @@ class GameController < ApplicationController
     @destinations = build_destinations
   end
 
+  def map
+    @airports = Airport.all
+    process_arrivals
+    @active_flights = Flight.in_progress.includes(:plane, :from_airport, :to_airport)
+
+    lats = @airports.map(&:latitude)
+    lngs = @airports.map(&:longitude)
+    @map_pad = 0.5
+    @min_lat = lats.min - @map_pad
+    @max_lat = lats.max + @map_pad
+    @min_lng = lngs.min - @map_pad
+    @max_lng = lngs.max + @map_pad
+    @map_w = 440
+    @map_h = 520
+  end
+
   def airline
     @planes = @player.planes.includes(:current_airport, :passengers)
     process_arrivals
@@ -117,6 +133,74 @@ class GameController < ApplicationController
     )
 
     redirect_to plane_path(plane), notice: "Departed for #{destination.code}!"
+  end
+
+  helper_method :map_x, :map_y, :arc_path, :arc_point, :flight_progress
+
+  def map_x(lng)
+    (lng - @min_lng) / (@max_lng - @min_lng) * @map_w + 20
+  end
+
+  def map_y(lat)
+    (@max_lat - lat) / (@max_lat - @min_lat) * @map_h + 20
+  end
+
+  def arc_path(from_lat, from_lng, to_lat, to_lng)
+    x1 = map_x(from_lng)
+    y1 = map_y(from_lat)
+    x2 = map_x(to_lng)
+    y2 = map_y(to_lat)
+
+    mx = (x1 + x2) / 2.0
+    my = (y1 + y2) / 2.0
+    dx = x2 - x1
+    dy = y2 - y1
+    dist = Math.sqrt(dx * dx + dy * dy)
+    nx = -dy / dist
+    ny = dx / dist
+    arc_height = dist * 0.4
+
+    cx = mx + nx * arc_height
+    cy = my + ny * arc_height
+
+    "M #{x1.round(1)} #{y1.round(1)} Q #{cx.round(1)} #{cy.round(1)} #{x2.round(1)} #{y2.round(1)}"
+  end
+
+  def arc_point(from_lat, from_lng, to_lat, to_lng, t)
+    x1 = map_x(from_lng)
+    y1 = map_y(from_lat)
+    x2 = map_x(to_lng)
+    y2 = map_y(to_lat)
+
+    mx = (x1 + x2) / 2.0
+    my = (y1 + y2) / 2.0
+    dx = x2 - x1
+    dy = y2 - y1
+    dist = Math.sqrt(dx * dx + dy * dy)
+    nx = -dy / dist
+    ny = dx / dist
+    arc_height = dist * 0.4
+
+    cx = mx + nx * arc_height
+    cy = my + ny * arc_height
+
+    t_clamped = [[t, 0].max, 1].min
+    u = 1 - t_clamped
+    x = u * u * x1 + 2 * u * t_clamped * cx + t_clamped * t_clamped * x2
+    y = u * u * y1 + 2 * u * t_clamped * cy + t_clamped * t_clamped * y2
+
+    tx = 2 * u * (cx - x1) + 2 * t_clamped * (x2 - cx)
+    ty = 2 * u * (cy - y1) + 2 * t_clamped * (y2 - cy)
+    angle = Math.atan2(ty, tx) * 180 / Math::PI
+
+    { x: x.round(1), y: y.round(1), angle: angle.round(1) }
+  end
+
+  def flight_progress(flight)
+    return 0 unless flight.in_progress?
+    elapsed = Time.current - flight.departed_at
+    total = flight.duration_seconds
+    [elapsed / total, 1.0].min
   end
 
   private

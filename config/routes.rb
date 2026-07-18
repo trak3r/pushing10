@@ -5,6 +5,7 @@ Rails.application.routes.draw do
 
   get "planes/:id", to: "game#plane", as: :plane
   get "airline", to: "game#airline", as: :airline
+  get "map", to: "game#map", as: :map
 
   post "fly", to: "game#do_fly"
   post "passengers/:id/board", to: "game#board", as: :board_passenger

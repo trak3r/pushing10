@@ -71,6 +71,13 @@ module PixelArtHelper
       ".ss.",
       "....",
     ],
+    compass: [
+      "..g..",
+      ".ggg.",
+      "gy.yg",
+      ".ggg.",
+      "..g..",
+    ],
   }
 
   def pixel_art(name, size: nil)

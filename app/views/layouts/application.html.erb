@@ -36,6 +36,10 @@
         <div class="nav-icon"><%= pixel_art :plane, size: 4 %></div>
         <span class="nav-label">Flight</span>
       <% end %>
+      <%= link_to map_path, class: "nav-item #{'active' if current_page?(map_path)}" do %>
+        <div class="nav-icon"><%= pixel_art :compass, size: 4 %></div>
+        <span class="nav-label">Map</span>
+      <% end %>
       <%= link_to airline_path, class: "nav-item #{'active' if current_page?(airline_path)}" do %>
         <div class="nav-icon"><%= pixel_art :airport, size: 4 %></div>
         <span class="nav-label">Airline</span>
