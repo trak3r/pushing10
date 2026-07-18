@@ -16,7 +16,7 @@
     <div class="stat-label">Fleet</div>
   </div>
   <div class="stat-card">
-    <div class="stat-icon"><%= pixel_art :plane, size: 5 %></div>
+    <div class="stat-icon"><%= pixel_art :plane_small, size: 5 %></div>
     <div class="stat-value"><%= @in_air_count %></div>
     <div class="stat-label">In Air</div>
   </div>
@@ -61,7 +61,7 @@
   <% @planes.each do |p| %>
     <div class="fleet-row">
       <div class="fleet-row-info">
-        <%= pixel_art :plane, size: 4 %>
+        <%= pixel_art :plane_small, size: 4 %>
         <div>
           <strong><%= p.name %></strong>
           <span class="text-sm text-muted"><%= p.plane_type.titleize %> &middot; <%= p.capacity %> seats</span>

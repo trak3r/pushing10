@@ -59,7 +59,7 @@
     <% flights_json.each do |fj| %>
       <g class="plane-marker" data-flight-id="<%= fj[:id] %>"
          transform="translate(<%= fj[:x] %>, <%= fj[:y] %>) rotate(<%= fj[:angle] %>)">
-        <%= pixel_art :plane, size: 3 %>
+        <%= pixel_art :plane_small, size: 3 %>
       </g>
     <% end %>
   </svg>
