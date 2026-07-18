@@ -1,90 +1,91 @@
 class GameController < ApplicationController
   before_action :load_player
 
-  def dashboard
-    @planes = @player.planes.includes(:current_airport, :passengers)
+  def planes
+    @planes = @player.planes.includes(:current_airport, :passengers, :flights)
+    process_arrivals
+  end
+
+  def plane
+    @plane = @player.planes.includes(:current_airport, :passengers, :flights).find(params[:id])
     process_arrivals
 
-    @plane = selected_plane
-    @current_airport = @plane.current_airport
+    @current_airport = @plane.current_airport.reload
     @active_flight = @plane.active_flight
 
     if @active_flight
-      @flight_eta = @active_flight.eta
       @seconds_remaining = @active_flight.seconds_remaining
     end
 
     @airport_passengers = build_passenger_list
     @boarded_passengers = @plane.boarded_passengers
     @plane_full = @plane.capacity > 0 && @boarded_passengers.count >= @plane.capacity
-    @destinations = Airport.where.not(id: @current_airport.id).map do |dest|
-      dist = @current_airport.distance_to(dest)
-      fuel = @plane.fuel_cost(dist)
-      pax_revenue = @boarded_passengers.select { |p| p.destination_airport_id == dest.id }.sum(&:reward)
-      {
-        airport: dest,
-        distance: dist,
-        in_range: dist <= @plane.range,
-        fuel_cost: fuel,
-        pax_revenue: pax_revenue,
-        net: pax_revenue - fuel,
-        deliverable_count: @boarded_passengers.count { |p| p.destination_airport_id == dest.id }
-      }
-    end.sort_by { |d| d[:distance] }
+    @destinations = build_destinations
+  end
+
+  def airline
+    @planes = @player.planes.includes(:current_airport, :passengers)
+    process_arrivals
+    @total_flights = Flight.where(plane: @planes).count
+    @completed_flights = Flight.where(plane: @planes).arrived.count
+    @total_revenue = Flight.where(plane: @planes).arrived.sum(:revenue)
+    @total_fuel = Flight.where(plane: @planes).arrived.sum(:fuel_cost)
+    @total_passengers_delivered = Passenger.where(player: @player, delivered: true).count
+    @in_air_count = @planes.count(&:in_flight?)
   end
 
   def board
-    plane = selected_plane
+    plane = @player.planes.find(params[:plane_id] || params[:id])
     if plane.in_flight?
-      redirect_to root_path(plane_id: plane.id), alert: "Can't board while in flight!"
+      redirect_to plane_path(plane), alert: "Can't board while in flight!"
       return
     end
 
     passenger = Passenger.find(params[:id])
 
     if passenger.origin_airport != plane.current_airport
-      redirect_to root_path(plane_id: plane.id), alert: "That passenger isn't at this airport!"
+      redirect_to plane_path(plane), alert: "That passenger isn't at this airport!"
       return
     end
 
     if passenger.player.present? || passenger.plane.present?
-      redirect_to root_path(plane_id: plane.id), alert: "That passenger is already taken!"
+      redirect_to plane_path(plane), alert: "That passenger is already taken!"
       return
     end
 
     boarded_count = plane.boarded_passengers.count
     if boarded_count >= plane.capacity
-      redirect_to root_path(plane_id: plane.id), alert: "Plane is full! Capacity: #{plane.capacity}"
+      redirect_to plane_path(plane), alert: "Plane is full! Capacity: #{plane.capacity}"
       return
     end
 
     passenger.update!(player: @player, plane: plane)
-    redirect_to root_path(plane_id: plane.id)
+    redirect_to plane_path(plane), notice: "#{passenger.name} boarded!"
   end
 
   def unboard
-    plane = selected_plane
+    plane = @player.planes.find(params[:plane_id] || params[:id])
     if plane.in_flight?
-      redirect_to root_path(plane_id: plane.id), alert: "Can't unboard while in flight!"
+      redirect_to plane_path(plane), alert: "Can't unboard while in flight!"
       return
     end
 
     passenger = Passenger.find(params[:id])
 
     if passenger.plane != plane
-      redirect_to root_path(plane_id: plane.id), alert: "That passenger isn't on your plane!"
+      redirect_to plane_path(plane), alert: "That passenger isn't on your plane!"
       return
     end
 
     passenger.update!(player: nil, plane: nil)
-    redirect_to root_path(plane_id: plane.id)
+    redirect_to plane_path(plane), notice: "#{passenger.name} deplaned!"
   end
 
   def do_fly
-    plane = selected_plane
+    plane = @player.planes.find(params[:plane_id] || params[:id])
 
     if plane.in_flight?
-      redirect_to root_path(plane_id: plane.id), alert: "Plane is already in flight!"
+      redirect_to plane_path(plane), alert: "Plane is already in flight!"
       return
     end
 
@@ -92,14 +93,14 @@ class GameController < ApplicationController
     distance = plane.current_airport.distance_to(destination)
 
     if distance > plane.range
-      redirect_to root_path(plane_id: plane.id), alert: "Destination out of range! (#{distance}km > #{plane.range}km)"
+      redirect_to plane_path(plane), alert: "Destination out of range! (#{distance}km > #{plane.range}km)"
       return
     end
 
     fuel_cost = plane.fuel_cost(distance)
 
     if @player.coins < fuel_cost
-      redirect_to root_path(plane_id: plane.id), alert: "Not enough coins for fuel! Need #{fuel_cost}, have #{@player.coins}."
+      redirect_to plane_path(plane), alert: "Not enough coins for fuel! Need #{fuel_cost}, have #{@player.coins}."
       return
     end
 
@@ -115,7 +116,7 @@ class GameController < ApplicationController
       departed_at: Time.current
     )
 
-    redirect_to root_path(plane_id: plane.id), notice: "Departed for #{destination.code}!"
+    redirect_to plane_path(plane), notice: "Departed for #{destination.code}!"
   end
 
   private
@@ -140,10 +141,7 @@ class GameController < ApplicationController
       plane.update!(current_airport: flight.to_airport)
       @player.increment!(:coins, revenue)
 
-      delivered = boarded.count { |p| p.destination_airport == flight.to_airport }
-      net = revenue - flight.fuel_cost
       replenish_passengers(flight.to_airport)
-      flash.now[:notice] = "#{plane.name} landed at #{flight.to_airport.code}! #{delivered} delivered, pax #{revenue}c, fuel #{flight.fuel_cost}c, net #{net}c."
     end
   end
 
@@ -162,14 +160,6 @@ class GameController < ApplicationController
     end
   end
 
-  def selected_plane
-    if params[:plane_id]
-      @player.planes.find(params[:plane_id])
-    else
-      @player.planes.first
-    end
-  end
-
   def build_passenger_list
     airport_pax = @current_airport.origin_passengers.where(delivered: false)
     onboard_pax = @plane.boarded_passengers.where.not(origin_airport: @current_airport)
@@ -184,6 +174,24 @@ class GameController < ApplicationController
       end
       { passenger: p, status: status }
     end
+  end
+
+  def build_destinations
+    boarded = @plane.boarded_passengers
+    Airport.where.not(id: @current_airport.id).map do |dest|
+      dist = @current_airport.distance_to(dest)
+      fuel = @plane.fuel_cost(dist)
+      pax_revenue = boarded.select { |p| p.destination_airport_id == dest.id }.sum(&:reward)
+      {
+        airport: dest,
+        distance: dist,
+        in_range: dist <= @plane.range,
+        fuel_cost: fuel,
+        pax_revenue: pax_revenue,
+        net: pax_revenue - fuel,
+        deliverable_count: boarded.count { |p| p.destination_airport_id == dest.id }
+      }
+    end.sort_by { |d| [d[:deliverable_count] > 0 ? 0 : 1, -d[:net]] }
   end
 
   def load_player

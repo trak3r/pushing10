@@ -1,0 +1,54 @@
+<% if notice %><div class="flash flash-notice"><%= notice %></div><% end %>
+<% if alert %><div class="flash flash-alert"><%= alert %></div><% end %>
+
+<div class="header">
+  <%= pixel_art :airline_logo, size: 8 %>
+  <span class="title">PUSHING <span class="title-10">10</span></span>
+</div>
+
+<div class="status-bar">
+  <div class="status-item">
+    <div class="status-label">Coins</div>
+    <div class="status-value text-accent"><%= pixel_art :coin, size: 4 %>&nbsp;<%= @player.coins %></div>
+  </div>
+  <div class="status-item">
+    <div class="status-label">Planes</div>
+    <div class="status-value"><%= pixel_art :plane, size: 4 %>&nbsp;<%= @planes.count %></div>
+  </div>
+  <div class="status-item">
+    <div class="status-label">In Air</div>
+    <div class="status-value"><%= @planes.count(&:in_flight?) %></div>
+  </div>
+  <div class="status-item">
+    <div class="status-label">Flights</div>
+    <div class="status-value"><%= Flight.where(plane: @planes).arrived.count %></div>
+  </div>
+</div>
+
+<div class="plane-list">
+  <% @planes.each do |p| %>
+    <%= link_to plane_path(p), class: "plane-list-card" do %>
+      <div class="plane-list-top">
+        <div class="plane-list-model">
+          <%= pixel_art :plane, size: 5 %>
+          <div>
+            <strong><%= p.name %></strong>
+            <span class="text-sm text-muted"><%= p.plane_type.titleize %></span>
+          </div>
+        </div>
+        <span class="status-badge <%= p.in_flight? ? 'flying' : 'landed' %>"><%= p.status_text %></span>
+      </div>
+      <div class="plane-list-bottom">
+        <span class="text-sm">
+          <%= pixel_art :airport, size: 3 %>
+          <%= p.in_flight? ? "#{p.current_airport.code} → #{p.active_flight.to_airport.code}" : p.current_airport.code %>
+        </span>
+        <% if p.in_flight? %>
+          <span class="text-sm text-accent"><%= p.active_flight.seconds_remaining %>s ETA</span>
+        <% else %>
+          <span class="text-sm text-muted"><%= p.boarded_passengers.count %>/<%= p.capacity %> seats</span>
+        <% end %>
+      </div>
+    <% end %>
+  <% end %>
+</div>

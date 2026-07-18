@@ -2,29 +2,44 @@
 <html>
   <head>
     <title><%= content_for(:title) || "Pushing10" %></title>
-    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="application-name" content="Pushing10">
     <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#0b1a2e">
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
 
     <%= yield :head %>
-
-    <%# Enable PWA manifest for installable apps (make sure to enable in config/routes.rb too!) %>
-    <%#= tag.link rel: "manifest", href: pwa_manifest_path(format: :json) %>
 
     <link rel="icon" href="/icon.svg" type="image/svg+xml">
     <link rel="shortcut icon" href="/icon.svg">
     <link rel="icon" href="/icon.png" type="image/png">
     <link rel="apple-touch-icon" href="/icon.png">
 
-    <%# Includes all stylesheet files in app/assets/stylesheets %>
     <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
     <%= javascript_importmap_tags %>
   </head>
 
   <body>
-    <%= yield %>
+    <main class="main-content">
+      <%= yield %>
+    </main>
+
+    <nav class="bottom-nav">
+      <% nav_plane_id = @plane&.id || @player&.planes&.first&.id %>
+      <%= link_to root_path, class: "nav-item #{'active' if current_page?(root_path)}" do %>
+        <div class="nav-icon"><%= pixel_art :plane, size: 4 %></div>
+        <span class="nav-label">Fleet</span>
+      <% end %>
+      <%= link_to nav_plane_id ? plane_path(nav_plane_id) : root_path, class: "nav-item #{'active' if controller_name == 'game' && action_name == 'plane'}" do %>
+        <div class="nav-icon"><%= pixel_art :plane, size: 4 %></div>
+        <span class="nav-label">Flight</span>
+      <% end %>
+      <%= link_to airline_path, class: "nav-item #{'active' if current_page?(airline_path)}" do %>
+        <div class="nav-icon"><%= pixel_art :airport, size: 4 %></div>
+        <span class="nav-label">Airline</span>
+      <% end %>
+    </nav>
   </body>
 </html>

@@ -1,0 +1,73 @@
+<% if notice %><div class="flash flash-notice"><%= notice %></div><% end %>
+<% if alert %><div class="flash flash-alert"><%= alert %></div><% end %>
+
+<div class="airline-header">
+  <div class="airline-logo">
+    <%= pixel_art :airline_logo, size: 12 %>
+  </div>
+  <h1><%= @player.name %>'s Airline</h1>
+  <p class="text-muted text-sm">Pushing10 Airways</p>
+</div>
+
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-icon"><%= pixel_art :plane, size: 5 %></div>
+    <div class="stat-value"><%= @planes.count %></div>
+    <div class="stat-label">Fleet</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon"><%= pixel_art :plane, size: 5 %></div>
+    <div class="stat-value"><%= @in_air_count %></div>
+    <div class="stat-label">In Air</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon"><%= pixel_art :coin, size: 5 %></div>
+    <div class="stat-value"><%= @total_revenue %></div>
+    <div class="stat-label">Revenue</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon"><%= pixel_art :passenger, size: 5 %></div>
+    <div class="stat-value"><%= @total_passengers_delivered %></div>
+    <div class="stat-label">Delivered</div>
+  </div>
+</div>
+
+<div class="card">
+  <h3>Performance</h3>
+  <div class="perf-row">
+    <span class="text-muted">Completed Flights</span>
+    <span class="text-lg"><%= @completed_flights %></span>
+  </div>
+  <div class="perf-row">
+    <span class="text-muted">Total Flights</span>
+    <span><%= @total_flights %></span>
+  </div>
+  <div class="perf-row">
+    <span class="text-muted">Total Revenue</span>
+    <span class="text-accent">+<%= @total_revenue %>c</span>
+  </div>
+  <div class="perf-row">
+    <span class="text-muted">Total Fuel Cost</span>
+    <span class="text-muted">-<%= @total_fuel %>c</span>
+  </div>
+  <div class="perf-row" style="border-top: 1px solid var(--border); padding-top: 8px; margin-top: 8px;">
+    <span class="text-accent2">Net Profit</span>
+    <span class="text-lg text-accent2"><%= @total_revenue - @total_fuel %>c</span>
+  </div>
+</div>
+
+<div class="card">
+  <h3>Fleet Details</h3>
+  <% @planes.each do |p| %>
+    <div class="fleet-row">
+      <div class="fleet-row-info">
+        <%= pixel_art :plane, size: 4 %>
+        <div>
+          <strong><%= p.name %></strong>
+          <span class="text-sm text-muted"><%= p.plane_type.titleize %> &middot; <%= p.capacity %> seats</span>
+        </div>
+      </div>
+      <span class="status-badge <%= p.in_flight? ? 'flying' : 'landed' %>"><%= p.status_text %></span>
+    </div>
+  <% end %>
+</div>

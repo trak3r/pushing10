@@ -1,0 +1,157 @@
+<% if notice %><div class="flash flash-notice"><%= notice %></div><% end %>
+<% if alert %><div class="flash flash-alert"><%= alert %></div><% end %>
+
+<% if @active_flight %>
+  <div class="flight-view" data-controller="flight" data-flight-seconds="<%= @seconds_remaining %>" data-flight-total="<%= @active_flight.duration_seconds %>" data-flight-plane-id="<%= @plane.id %>">
+    <div class="sky">
+      <div class="cloud cloud-1"></div>
+      <div class="cloud cloud-2"></div>
+      <div class="cloud cloud-3"></div>
+      <div class="cloud cloud-4"></div>
+    </div>
+
+    <div class="plane-visual">
+      <div class="plane-visual-body">
+        <div class="plane-visual-windows">
+          <% @plane.capacity.times do |i| %>
+            <div class="plane-window<%= ' occupied' if @boarded_passengers[i] %>">
+              <% if @boarded_passengers[i] %>
+                <div class="window-face"><%= pixel_art :face, size: 3 %></div>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+
+    <div class="flight-info">
+      <div class="flight-route">
+        <%= pixel_art :airport, size: 4 %>
+        <span class="text-lg"><%= @active_flight.from_airport.code %></span>
+        <span class="text-muted">→</span>
+        <span class="text-lg text-accent"><%= @active_flight.to_airport.code %></span>
+        <%= pixel_art :airport, size: 4 %>
+      </div>
+      <div class="flight-eta">
+        Arriving in <span id="eta-countdown" class="text-accent text-lg"><%= @seconds_remaining %>s</span>
+      </div>
+      <div class="flight-distance text-muted text-sm"><%= @active_flight.distance %>km</div>
+      <progress id="eta-progress" value="<%= @active_flight.duration_seconds - @seconds_remaining %>" max="<%= @active_flight.duration_seconds %>"></progress>
+      <div class="flight-pax text-sm text-muted mt-sm">
+        <%= @boarded_passengers.count %> passenger<%= 's' if @boarded_passengers.count != 1 %> on board
+      </div>
+    </div>
+  </div>
+<% else %>
+  <div class="gate-view">
+    <div class="gate-scene">
+      <div class="terminal">
+        <div class="terminal-roof"></div>
+        <div class="terminal-body">
+          <div class="terminal-door"></div>
+          <div class="terminal-name"><%= @current_airport.code %></div>
+        </div>
+      </div>
+      <div class="gate-plane">
+        <div class="gate-plane-body">
+          <div class="gate-plane-windows">
+            <% @plane.capacity.times do |i| %>
+              <div class="plane-window<%= ' occupied' if @boarded_passengers[i] %>">
+                <% if @boarded_passengers[i] %>
+                  <div class="window-face"><%= pixel_art :face, size: 3 %></div>
+                <% end %>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      </div>
+      <div class="ground-line"></div>
+    </div>
+
+    <div class="gate-header">
+      <div class="row">
+        <div>
+          <h2><%= @current_airport.name %></h2>
+          <span class="tag"><%= @current_airport.code %></span>
+        </div>
+        <div class="text-right">
+          <div class="text-sm text-muted"><%= @plane.name %></div>
+          <div class="text-sm text-muted"><%= @plane.boarded_passengers.count %>/<%= @plane.capacity %> seats</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="depart-section" data-controller="depart">
+      <button class="btn btn-primary btn-full btn-lg" data-action="depart#toggle" data-depart-target="button">
+        <%= pixel_art :plane, size: 4 %>&nbsp; Depart
+      </button>
+
+      <div class="dest-picker" data-depart-target="picker" style="display: none;">
+        <h3>Destinations</h3>
+        <div class="dest-grid mt-sm">
+          <% @destinations.each do |d| %>
+            <div class="dest-item<%= ' out-of-range' unless d[:in_range] %>">
+              <div class="col">
+                <strong><%= d[:airport].code %> &ndash; <%= d[:airport].name %></strong>
+                <span class="text-muted text-sm">
+                  <%= d[:distance] %>km &middot; Fuel <%= d[:fuel_cost] %>c
+                  <% if d[:deliverable_count] > 0 %>
+                    &middot; Pax <%= d[:pax_revenue] %>c
+                    <span class="<%= d[:net] >= 0 ? 'text-accent' : 'text-muted' %>"><%= d[:net] >= 0 ? '+' : '' %><%= d[:net] %>c</span>
+                  <% else %>
+                    &middot; <span class="text-muted">no pax</span>
+                  <% end %>
+                  <%= "&middot; OUT OF RANGE".html_safe unless d[:in_range] %>
+                </span>
+              </div>
+              <% if d[:in_range] %>
+                <%= button_to "Fly", { action: "do_fly" }, params: { destination_id: d[:airport].id, plane_id: @plane.id }, method: :post, class: "btn btn-sm #{d[:net] >= 0 ? 'btn-primary' : 'btn-outline'}" %>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+
+    <h3 class="mt-md">Passengers</h3>
+    <div class="passenger-list mt-sm">
+      <% if @airport_passengers.any? %>
+        <% @airport_passengers.each do |entry| %>
+          <% pax = entry[:passenger] %>
+          <% case entry[:status] %>
+          <% when :boarded %>
+            <div class="passenger-item boarded">
+              <div class="passenger-info">
+                <%= pixel_art :passenger, size: 4 %> <strong><%= pax.name %></strong>
+                <span class="text-muted text-sm">&rarr; <%= pax.destination_airport.code %> &middot; <%= pax.reward %> coins &middot; <span class="text-accent">onboard</span></span>
+              </div>
+              <%= button_to "Deplane", unboard_passenger_path(pax, plane_id: @plane.id), method: :post, class: "btn btn-sm btn-outline" %>
+            </div>
+          <% when :taken %>
+            <div class="passenger-item taken">
+              <div class="passenger-info">
+                <%= pixel_art :passenger, size: 4 %> <strong><%= pax.name %></strong>
+                <span class="text-muted text-sm">&rarr; <%= pax.destination_airport.code %> &middot; <%= pax.reward %> coins &middot; on another plane</span>
+              </div>
+              <span class="btn btn-sm btn-outline disabled">In use</span>
+            </div>
+          <% else %>
+            <div class="passenger-item">
+              <div class="passenger-info">
+                <%= pixel_art :passenger, size: 4 %> <strong><%= pax.name %></strong>
+                <span class="text-muted text-sm">&rarr; <%= pax.destination_airport.code %> &middot; <%= pax.reward %> coins</span>
+              </div>
+              <% if @plane_full %>
+                <span class="btn btn-sm btn-outline disabled">Full</span>
+              <% else %>
+                <%= button_to "Board", board_passenger_path(pax, plane_id: @plane.id), method: :post, class: "btn btn-sm btn-primary" %>
+              <% end %>
+            </div>
+          <% end %>
+        <% end %>
+      <% else %>
+        <p class="text-muted">No passengers here right now.</p>
+      <% end %>
+    </div>
+  </div>
+<% end %>

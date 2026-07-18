@@ -10,6 +10,9 @@ module PixelArtHelper
     "d" => "#0b1a2e",
     "s" => "#1a3a5a",
     "w" => "#ffffff",
+    "o" => "#e8a040",
+    "p" => "#d4a0e8",
+    "c" => "#7ec8e3",
   }
 
   SPRITES = {
@@ -40,6 +43,33 @@ module PixelArtHelper
       "..g..",
       ".g.g.",
       "g...g",
+    ],
+    face: [
+      ".o.",
+      ".w.",
+      "w.w",
+    ],
+    cloud: [
+      "..cc..",
+      ".cccc.",
+      "cccccc",
+      "cccccc",
+      ".cccc.",
+      "..cc..",
+    ],
+    airline_logo: [
+      "....gggg....",
+      "...gggggg...",
+      "..gggggggg..",
+      ".gggggggggg.",
+      "gggggggggggg",
+      "..gggggg....",
+    ],
+    window: [
+      "....",
+      ".ss.",
+      ".ss.",
+      "....",
     ],
   }
 
